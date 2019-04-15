@@ -39,11 +39,11 @@ css_style="stylename"
 * Added [cookieconsent](https://cookieconsent.insites.com/)
 * Added `privacy_policy_url=""` option in the footer.
   - Generate one at: [termsfeed.com](https://www.termsfeed.com/blog/sample-privacy-policy-template)
-
-        # Tip: Paste the content from the generated html to a new post (./bb.sh post) with the the title "privacy-policy"
-        # This should generate a new .php file, which will be ignored from the index with html_exclude=('privacy-policy.php') down below.
-        # Then add /privacy-policy.php to privacy_policy_url="" so it ends up like this: privacy_policy_url="/privacy-policy.php"
-
+```
+# Tip: Paste the content from the generated html to a new post (./bb.sh post) with the the title "privacy-policy"
+# This should generate a new .php file, which will be ignored from the index with html_exclude=('privacy-policy.php') down below.
+# Then add /privacy-policy.php to privacy_policy_url="" so it ends up like this: privacy_policy_url="/privacy-policy.php"
+```
   - A link will then show up in the footer.
 
 * Templates in use for the bootstrap styles are:
