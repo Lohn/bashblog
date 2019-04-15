@@ -1,4 +1,60 @@
-bashblog
+# bashblog
+
+## Forked from [cfenollosa/bashblog](https://github.com/cfenollosa/bashblog)
+
+* Heavily modified with added support for Bootstrap [Styles](https://bootswatch.com/3/)
+
+* Styles can be selected in config/.config with:
+
+```bash
+css_style="stylename"
+```
+    # Set the preferred bootstrap style.
+    # Choose between:
+    # cerulean, cosmo, cyborg, darkly, flatly, journal, lumen, paper, readable, sandstone, simplex, slate, spacelab, superhero, united, yeti
+
+* Replaced comments system with [hashover-next](https://github.com/jacobwb/hashover-next)
+* Set hashover comments settings
+      hashover_body="on"        # Turn hashover comments in posts on/off
+      hashover_footer="off"     # Turn hashover comments in footer on/off
+      hashover_comments="on"    # Turn hashover comments on/off
+
+* Changed file extension to .php
+* Added support for more markdown conversion tools.
+  - hsmarkdown (pandoc ext.)
+    - Supports the signature 'markdown_bin in.md > out.php'
+  - Markdown.pl
+  - markdown_py
+  - md2html.awk
+
+*** If used with existing old generated files, the title will most likely disappear ***
+- This can be solved, by editing the posts with `./bb.sh edit post-title.md` and save.
+
+* Added Social Sharing Buttons 
+  - [Super fast and easy Social Media Sharing Buttons. No JavaScript. No tracking.](https://sharingbuttons.io/)
+  - Added to templates/.sharingbuttons.template
+  - Config option: `Sharingbuttons=""` on/off
+  - Each button can be turned on/off in settings
+
+* Added [cookieconsent](https://cookieconsent.insites.com/)
+* Added `privacy_policy_url=""` option in the footer.
+  - Generate one at: [termsfeed.com](https://www.termsfeed.com/blog/sample-privacy-policy-template)
+        # Tip: Paste the content from the generated html to a new post (./bb.sh post) with the the title "privacy-policy"
+        # This should generate a new .php file, which will be ignored from the index with html_exclude=('privacy-policy.php') down below.
+        # Then add /privacy-policy.php to privacy_policy_url="" so it ends up like this: privacy_policy_url="/privacy-policy.php"
+  - A link will then show up in the footer.
+
+* Templates in use for the bootstrap styles are:
+  - templates/.body.template
+  - templates/.content.template
+  - templates/.end.template
+  - *** see config file ***
+
+* Default tags in config:
+  - `default_tags="bashblog, bash, shell, shell-script"`
+
+* Added Abort option with [A]bort which aborts the new post, and deletes the tmp files.
+
 ========
 
 A single Bash script to create blogs. 
