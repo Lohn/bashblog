@@ -50,7 +50,7 @@ css_style="stylename"
   - templates/.body.template
   - templates/.content.template
   - templates/.end.template
-  - *** see config file ***
+   *** see config file ***
 
 * Default tags in config:
   - `default_tags="bashblog, bash, shell, shell-script"`
