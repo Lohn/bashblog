@@ -15,9 +15,12 @@ css_style="stylename"
 
 * Replaced comments system with [hashover-next](https://github.com/jacobwb/hashover-next)
 * Set hashover comments settings
+
+```
       hashover_body="on"        # Turn hashover comments in posts on/off
       hashover_footer="off"     # Turn hashover comments in footer on/off
       hashover_comments="on"    # Turn hashover comments on/off
+```
 
 * Changed file extension to .php
 * Added support for more markdown conversion tools.
