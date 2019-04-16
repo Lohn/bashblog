@@ -57,7 +57,7 @@ Then serve the testing folder:
 cp -rp /home/username/public_html/myblog_folder.bak /home/username/public_html/myblog_folder/myblog_test_folder
 ```
 
-Access https://yoururl/myblog_test_folder and do all the work, then when all is god, do:
+Access https://yoururl/myblog_test_folder and do all the work, then when all is good, do:
 
 ```bash
 mv /home/username/public_html/myblog_folder /home/username/public_html/myblog_folder.backup
