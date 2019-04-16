@@ -224,34 +224,6 @@ twitter_card() {
     echo "<meta name='twitter:image' content='$image' />"
 }
 
-# Adds the code needed by the twitter button
-#
-# $1 the post URL
-# twitter() {
-#     [[ -z $global_twitter_username ]] && return
-# 
-#     if [[ -z $global_hashover_username ]]; then
-#         if [[ $global_twitter_cookieless == true ]]; then 
-#             id=$RANDOM
-# 
-#             search_engine="https://twitter.com/search?q="
-# 
-#             echo "<p id='twitter'><a href='http://twitter.com/intent/tweet?url=$1&text=$template_twitter_comment&via=$global_twitter_username'>$template_comments $template_twitter_button</a> "
-#             echo "<a href='$search_engine""$1'><span id='count-$id'></span></a>&nbsp;</p>"
-#             return;
-#         else 
-#             echo "<p id='twitter'>$template_comments&nbsp;"; 
-#         fi
-#     else
-#         echo "<p id='twitter'><a href=\"$1#hashover_thread\">$template_comments</a> &nbsp;"
-#     fi  
-# 
-#     echo "<a href=\"https://twitter.com/share\" class=\"twitter-share-button\" data-text=\"$template_twitter_comment\" data-url=\"$1\""
-#     echo " data-via=\"$global_twitter_username\""
-#     echo ">$template_twitter_button</a>	<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=\"//platform.twitter.com/widgets.js\";fjs.parentNode.insertBefore(js,fjs);}}(document,\"script\",\"twitter-wjs\");</script>"
-#     echo "</p>"
-# }
-
 Sharingbuttons() {
   [[ -n $Sharingbuttons_template ]] && source $Sharingbuttons_template
 }
@@ -438,9 +410,9 @@ parse_file() {
 # Manages the creation of the text file and the parsing to html file
 # also the drafts
 write_entry() {
-    test_markdown && fmt=md || fmt=html
+    test_markdown && fmt=md || fmt=$file_ext
     f=$2
-    [[ $2 == -html ]] && fmt=html && f=$3
+    [[ $2 == -$file_ext ]] && fmt=$file_ext && f=$3
 
     if [[ -n $f ]]; then
         TMPFILE=$f
@@ -451,9 +423,9 @@ write_entry() {
         fi
         # guess format from TMPFILE
         extension=${TMPFILE##*.}
-        [[ $extension == md || $extension == html ]] && fmt=$extension
-        # but let user override it (`bb.sh post -html file.md`)
-        [[ $2 == -html ]] && fmt=html
+        [[ $extension == md || $extension == $file_ext ]] && fmt=$extension
+        # but let user override it (`bb.sh post -$file_ext file.md`)
+        [[ $2 == -$file_ext ]] && fmt=$file_ext
         # Test if Markdown is working before re-posting a .md file
         if [[ $extension == md ]]; then
             test_markdown
@@ -466,7 +438,7 @@ write_entry() {
         TMPFILE=.entry-$RANDOM.$fmt
         echo -e "Title on this line\n" >> "$TMPFILE"
 
-        [[ $fmt == html ]] && cat << EOF >> "$TMPFILE"
+        [[ $fmt == $file_ext ]] && cat << EOF >> "$TMPFILE"
 <p>The rest of the text file is an <b>html</b> blog post. The process will continue as soon
 as you exit your editor.</p>
 
@@ -874,53 +846,6 @@ delete_includes() {
     rm ".title.$file_ext" ".footer.$file_ext" ".header.$file_ext"
 }
 
-# Create the css file from scratch
-create_css() {
-    # To avoid overwriting manual changes. However it is recommended that
-    # this function is modified if the user changes the blog.css file
-    (( ${#css_include[@]} > 0 )) && return || css_include=('main.css' 'blog.css')
-    if [[ ! -f blog.css ]]; then 
-        # blog.css directives will be loaded after main.css and thus will prevail
-        echo '#title{font-size: x-large;}
-        a.ablack{color:black !important;}
-        li{margin-bottom:8px;}
-        ul,ol{margin-left:24px;margin-right:24px;}
-        #all_posts{margin-top:24px;text-align:center;}
-        .subtitle{font-size:small;margin:12px 0px;}
-        .content p{margin-left:24px;margin-right:24px;}
-        h1{margin-bottom:12px !important;}
-        #description{font-size:large;margin-bottom:12px;}
-        h3{margin-top:42px;margin-bottom:8px;}
-        h4{margin-left:24px;margin-right:24px;}
-        img{max-width:100%;}
-        #twitter{line-height:20px;vertical-align:top;text-align:right;font-style:italic;color:#333;margin-top:24px;font-size:14px;}' > blog.css
-    fi
-
-    # If there is a style.css from the parent page (i.e. some landing page)
-    # then use it. This directive is here for compatibility with my own
-    # home page. Feel free to edit it out, though it doesn't hurt
-    if [[ -f ../style.css ]] && [[ ! -f main.css ]]; then
-        ln -s "../style.css" "main.css" 
-    elif [[ ! -f main.css ]]; then
-        echo 'body{font-family:Georgia,"Times New Roman",Times,serif;margin:0;padding:0;background-color:#F3F3F3;}
-        #divbodyholder{padding:5px;background-color:#DDD;width:100%;max-width:874px;margin:24px auto;}
-        #divbody{border:solid 1px #ccc;background-color:#fff;padding:0px 48px 24px 48px;top:0;}
-        .headerholder{background-color:#f9f9f9;border-top:solid 1px #ccc;border-left:solid 1px #ccc;border-right:solid 1px #ccc;}
-        .header{width:100%;max-width:800px;margin:0px auto;padding-top:24px;padding-bottom:8px;}
-        .content{margin-bottom:5%;}
-        .nomargin{margin:0;}
-        .description{margin-top:10px;border-top:solid 1px #666;padding:10px 0;}
-        h3{font-size:20pt;width:100%;font-weight:bold;margin-top:32px;margin-bottom:0;}
-        .clear{clear:both;}
-        #footer{padding-top:10px;border-top:solid 1px #666;color:#333333;text-align:center;font-size:small;font-family:"Courier New","Courier",monospace;}
-        a{text-decoration:none;color:#003366 !important;}
-        a:visited{text-decoration:none;color:#336699 !important;}
-        blockquote{background-color:#f9f9f9;border-left:solid 4px #e9e9e9;margin-left:12px;padding:12px 12px 12px 24px;}
-        blockquote img{margin:12px 0px;}
-        blockquote iframe{margin:12px 0px;}' > main.css
-    fi
-}
-
 # Regenerates all the single post entries, keeping the post content but modifying
 # the title, html structure, etc
 rebuild_all_entries() {
@@ -960,9 +885,9 @@ usage() {
     echo "Usage: $0 command [filename]"
     echo ""
     echo "Commands:"
-    echo "    post [-html] [filename] insert a new blog post, or the filename of a draft to continue editing it"
+    echo "    post [-$file_ext] [filename] insert a new blog post, or the filename of a draft to continue editing it"
     echo "                            it tries to use markdown by default, and falls back to HTML if it's not available."
-    echo "                            use '-html' to override it and edit the post as HTML even when markdown is available"
+    echo "                            use '-$file_ext' to override it and edit the post as HTML even when markdown is available"
     echo "    edit [-n|-f] [filename] edit an already published .$file_ext or .md file. **NEVER** edit manually a published .$file_ext file,"
     echo "                            always use this function as it keeps internal data and rebuilds the blog"
     echo "                            use '-n' to give the file a new name, if title was changed"
@@ -1070,7 +995,6 @@ do_main() {
     [[ $1 == reset ]] &&
         reset && exit
 
-    create_css
     create_includes
     [[ $1 == post ]] && write_entry "$@"
     [[ $1 == rebuild ]] && rebuild_all_entries && rebuild_tags
@@ -1090,7 +1014,6 @@ do_main() {
     make_rss
     delete_includes
 }
-
 
 #
 # MAIN
