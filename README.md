@@ -36,6 +36,39 @@ css_style="stylename"
 *** Set correct file extension in config ***
 `file_ext="html"` or `file_ext="php"`
 
+If you want to switch your current site's file exstension from .html to .php, you could do something like this:
+
+```bash
+for file in *.html; do     mv "$file" "$(basename "$file" .html).php"; done
+```
+*** Do not use on live production site ***
+------------
+Then set `file_ext="php"` in `config/.config` and do `./bb.sh rebuild`
+
+Make a backup and set up a testing environment to make sure everything works.
+
+Something like: 
+```bash
+cp -rp /home/username/public_html/myblog_folder /home/username/public_html/myblog_folder.bak
+```
+
+Then serve the testing folder:  
+```bash
+cp -rp /home/username/public_html/myblog_folder.bak /home/username/public_html/myblog_folder/myblog_test_folder
+```
+
+Access https://yoururl/myblog_test_folder and do all the work, then when all is god, do:
+
+```bash
+mv /home/username/public_html/myblog_folder /home/username/public_html/myblog_folder.backup
+```
+
+And finally copy testing site to production:
+
+```bash
+cp -rp /home/username/public_html/myblog_folder.backup/myblog_test_folder /home/username/public_html/myblog_folder
+```
+------------
 * Added Social Sharing Buttons 
   - [Super fast and easy Social Media Sharing Buttons. No JavaScript. No tracking.](https://sharingbuttons.io/)
   - Added to templates/.sharingbuttons.template
