@@ -18,7 +18,7 @@ global_config="config/.config"
 global_variables() {
 
     # Markdown location. Trying to autodetect by default.
-    # The invocation must support the signature 'markdown_bin in.md > out.php'
+    # The invocation must support the signature 'markdown_bin in.md > out.$file_ext'
     if which hsmarkdown 2>/dev/null; then
       
       markdown_bin=$(which hsmarkdown 2>/dev/null)
@@ -41,11 +41,11 @@ global_variables() {
 # Check for the validity of some variables
 # DO NOT EDIT THIS FUNCTION unless you know what you're doing
 global_variables_check() {
-    [[ $header_file == .header.php ]] &&
-        echo "Please check your configuration. '.header.php' is not a valid value for the setting 'header_file'" &&
+    [[ $header_file == .header.$file_ext ]] &&
+        echo "Please check your configuration. '.header.$file_ext' is not a valid value for the setting 'header_file'" &&
         exit
-    [[ $footer_file == .footer.php ]] &&
-        echo "Please check your configuration. '.footer.php' is not a valid value for the setting 'footer_file'" &&
+    [[ $footer_file == .footer.$file_ext ]] &&
+        echo "Please check your configuration. '.footer.$file_ext' is not a valid value for the setting 'footer_file'" &&
         exit
 }
 
@@ -62,8 +62,8 @@ test_markdown() {
 
 # Parse a Markdown file into HTML and return the generated file
 markdown() {
-    out=${1%.md}.php
-    while [[ -f $out ]]; do out=${out%.php}.$RANDOM.php; done
+    out=${1%.md}.$file_ext
+    while [[ -f $out ]]; do out=${out%.$file_ext}.$RANDOM.$file_ext; done
     $markdown_bin "$1" > "$out"
     echo "$out"
 }
@@ -143,7 +143,7 @@ get_html_file_content() {
     }"
 }
 
-# Edit an existing, published .php file while keeping its original timestamp
+# Edit an existing, published .$file_ext file while keeping its original timestamp
 # Please note that this function does not automatically republish anything, as
 # it is usually called from 'main'.
 #
@@ -156,11 +156,11 @@ get_html_file_content() {
 #	"full" to edit full HTML, and not only text part (keeps old filename)
 #	leave empty for default behavior (edit only text part and change name)
 edit() {
-    [[ ! -f "${1%%.*}.php" ]] && echo "Can't edit post "${1%%.*}.php", did you mean to use \"bb.sh post <draft_file>\"?" && exit -1
+    [[ ! -f "${1%%.*}.$file_ext" ]] && echo "Can't edit post "${1%%.*}.$file_ext", did you mean to use \"bb.sh post <draft_file>\"?" && exit -1
     # Original post timestamp
-    edit_timestamp=$(LC_ALL=C date -r "${1%%.*}.php" +"$date_format_full" )
-    touch_timestamp=$(LC_ALL=C date -r "${1%%.*}.php" +"$date_format_timestamp")
-    tags_before=$(tags_in_post "${1%%.*}.php")
+    edit_timestamp=$(LC_ALL=C date -r "${1%%.*}.$file_ext" +"$date_format_full" )
+    touch_timestamp=$(LC_ALL=C date -r "${1%%.*}.$file_ext" +"$date_format_timestamp")
+    tags_before=$(tags_in_post "${1%%.*}.$file_ext")
     if [[ $2 == full ]]; then
         $EDITOR "$1"
         filename=$1
@@ -174,14 +174,14 @@ edit() {
             # editing markdown file
             $EDITOR "$1"
             TMPFILE=$(markdown "$1")
-            filename=${1%%.*}.php
+            filename=${1%%.*}.$file_ext
         else
             # Create the content file
-            TMPFILE=$(basename "$1").$RANDOM.php
+            TMPFILE=$(basename "$1").$RANDOM.$file_ext
             # Title
             get_post_title "$1" > "$TMPFILE"
             # Post text with plaintext tags
-            get_html_file_content 'text' 'text' <"$1" | sed "/^<p>$template_tags_line_header/s|<a href='$prefix_tags\([^']*\).php'>\\1</a>|\\1|g" >> "$TMPFILE"
+            get_html_file_content 'text' 'text' <"$1" | sed "/^<p>$template_tags_line_header/s|<a href='$prefix_tags\([^']*\).$file_ext'>\\1</a>|\\1|g" >> "$TMPFILE"
             $EDITOR "$TMPFILE"
             filename=$1
         fi
@@ -224,6 +224,34 @@ twitter_card() {
     echo "<meta name='twitter:image' content='$image' />"
 }
 
+# Adds the code needed by the twitter button
+#
+# $1 the post URL
+# twitter() {
+#     [[ -z $global_twitter_username ]] && return
+# 
+#     if [[ -z $global_hashover_username ]]; then
+#         if [[ $global_twitter_cookieless == true ]]; then 
+#             id=$RANDOM
+# 
+#             search_engine="https://twitter.com/search?q="
+# 
+#             echo "<p id='twitter'><a href='http://twitter.com/intent/tweet?url=$1&text=$template_twitter_comment&via=$global_twitter_username'>$template_comments $template_twitter_button</a> "
+#             echo "<a href='$search_engine""$1'><span id='count-$id'></span></a>&nbsp;</p>"
+#             return;
+#         else 
+#             echo "<p id='twitter'>$template_comments&nbsp;"; 
+#         fi
+#     else
+#         echo "<p id='twitter'><a href=\"$1#hashover_thread\">$template_comments</a> &nbsp;"
+#     fi  
+# 
+#     echo "<a href=\"https://twitter.com/share\" class=\"twitter-share-button\" data-text=\"$template_twitter_comment\" data-url=\"$1\""
+#     echo " data-via=\"$global_twitter_username\""
+#     echo ">$template_twitter_button</a>	<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=\"//platform.twitter.com/widgets.js\";fjs.parentNode.insertBefore(js,fjs);}}(document,\"script\",\"twitter-wjs\");</script>"
+#     echo "</p>"
+# }
+
 Sharingbuttons() {
   [[ -n $Sharingbuttons_template ]] && source $Sharingbuttons_template
 }
@@ -260,7 +288,7 @@ is_boilerplate_file() {
 #
 # $1     a file with the body of the content
 # $2     the output file
-# $3     "yes" if we want to generate the index.php,
+# $3     "yes" if we want to generate the index.$file_ext,
 #        "no" to insert new blog posts
 # $4     title for the html header
 # $5     original blog timestamp
@@ -276,7 +304,7 @@ create_html_page() {
     # Create the actual blog post
     # html, head
     {
-        cat ".header.php"
+        cat ".header.$file_ext"
         echo "<title>$title</title>"
         google_analytics
         twitter_card "$content" "$title"
@@ -294,7 +322,7 @@ create_html_page() {
         echo '<span class="pull-right">'
         echo '<a href="/"><img src="public/img/bash.png" alt="'$title' - '$global_description'" class="toplogo"></a>'        
         echo '</span>'
-        cat .title.php
+        cat .title.$file_ext
         # echo '</h1>' # title
         echo '</div>' # Jumbotron
         echo '</div>' # header
@@ -348,7 +376,7 @@ create_html_page() {
         echo '</div>' # row
         echo '</div>' # container 
         # page footer
-        cat .footer.php
+        cat .footer.$file_ext
         hashover_footer
         [[ -n $body_end_file ]] && cat "$body_end_file"
         echo '</body>'
@@ -363,7 +391,7 @@ create_html_page() {
 # $3    (optional) destination file name
 # note that although timestamp is optional, something must be provided at its
 # place if destination file name is provided, i.e:
-# parse_file source.txt "" destination.php
+# parse_file source.txt "" destination.$file_ext
 parse_file() {
     # Read for the title and check that the filename is ok
     title=""
@@ -380,11 +408,11 @@ parse_file() {
                 [[ -n $filename ]] || 
                     filename=$RANDOM # don't allow empty filenames
 
-                filename=$filename.php
+                filename=$filename.$file_ext
 
                 # Check for duplicate file names
                 while [[ -f $filename ]]; do
-                    filename=${filename%.php}$RANDOM.php
+                    filename=${filename%.$file_ext}$RANDOM.$file_ext
                 done
             fi
             content=$filename.tmp
@@ -395,7 +423,7 @@ parse_file() {
 
             echo -n "<p>$template_tags_line_header " >> "$content"
             for item in "${array[@]}"; do
-                echo -n "<a href='$prefix_tags$item.php'>$item</a>, "
+                echo -n "<a href='$prefix_tags$item.$file_ext'>$item</a>, "
             done | sed 's/, $/<\/p>/g' >> "$content"
         else
             echo "$line" >> "$content"
@@ -541,7 +569,7 @@ all_posts() {
             # Date
             date=$(LC_ALL=$date_locale date -r "$i" +"$date_format")
             echo " $date</li>"
-        done < <(ls -t ./*.php)
+        done < <(ls -t ./*.$file_ext)
         echo "" 1>&3
         echo "</ul>"
         echo "<div id=\"all_posts\"><a href=\"./$index_file\">$template_archive_index_page</a></div>"
@@ -564,12 +592,12 @@ all_tags() {
     {
         echo "<h3>$template_tags_title</h3>"
         echo "<ul>"
-        for i in $prefix_tags*.php; do
+        for i in $prefix_tags*.$file_ext; do
             [[ -f "$i" ]] || break
             echo -n "." 1>&3
             nposts=$(grep -c "<\!-- text begin -->" "$i")
             tagname=${i#"$prefix_tags"}
-            tagname=${tagname%.php}
+            tagname=${tagname%.$file_ext}
             case $nposts in
                 1) word=$template_tags_posts_singular;;
                 2|3|4) word=$template_tags_posts_2_4;;
@@ -588,7 +616,7 @@ all_tags() {
     rm "$contentfile"
 }
 
-# Generate the index.php with the content of the latest posts
+# Generate the index.$file_ext with the content of the latest posts
 rebuild_index() {
     echo -n "Rebuilding the index "
     newindexfile=$index_file.$RANDOM
@@ -611,7 +639,7 @@ rebuild_index() {
             fi
             echo -n "." 1>&3
             n=$(( n + 1 ))
-        done < <(ls -t ./*.php) # sort by date, newest first
+        done < <(ls -t ./*.$file_ext) # sort by date, newest first
 
         feed=$blog_feed
         if [[ -n $global_feedburner ]]; then feed=$global_feedburner; fi
@@ -639,23 +667,23 @@ tags_in_post() {
 posts_with_tags() {
     (($# < 1)) && return
     set -- "${@/#/$prefix_tags}"
-    set -- "${@/%/.php}"
+    set -- "${@/%/.$file_ext}"
     sed -n '/^<h2 class="blog-post-title"><a href="[^"]*">/{s/.*href="\([^"]*\)">.*/\1/;p;}' "$@" 2> /dev/null
 }
 
-# Rebuilds tag_*.php files
+# Rebuilds tag_*.$file_ext files
 # if no arguments given, rebuilds all of them
 # if arguments given, they should have this format:
 # "FILE1 [FILE2 [...]]" "TAG1 [TAG2 [...]]"
 # where FILEn are files with posts which should be used for rebuilding tags,
 # and TAGn are names of tags which should be rebuilt.
 # example:
-# rebuild_tags "one_post.php another_article.php" "example-tag another-tag"
+# rebuild_tags "one_post.$file_ext another_article.$file_ext" "example-tag another-tag"
 # mind the quotes!
 rebuild_tags() {
     if (($# < 2)); then
         # will process all files and tags
-        files=$(ls -t ./*.php)
+        files=$(ls -t ./*.$file_ext)
         all_tags=yes
     else
         # will process only given files and tags
@@ -666,10 +694,10 @@ rebuild_tags() {
     echo -n "Rebuilding tag pages "
     n=0
     if [[ -n $all_tags ]]; then
-        rm ./"$prefix_tags"*.php &> /dev/null
+        rm ./"$prefix_tags"*.$file_ext &> /dev/null
     else
         for i in $tags; do
-            rm "./$prefix_tags$i.php" &> /dev/null
+            rm "./$prefix_tags$i.$file_ext" &> /dev/null
         done
     fi
     # First we will process all files and create temporal tag files
@@ -686,7 +714,7 @@ rebuild_tags() {
         fi >"$tmpfile"
         for tag in $(tags_in_post "$i"); do
             if [[ -n $all_tags || " $tags " == *" $tag "* ]]; then
-                cat "$tmpfile" >> "$prefix_tags$tag".tmp.php
+                cat "$tmpfile" >> "$prefix_tags$tag".tmp.$file_ext
             fi
         done
     done <<< "$files"
@@ -694,10 +722,10 @@ rebuild_tags() {
     # Now generate the tag files with headers, footers, etc
     while IFS='' read -r i; do
         tagname=${i#./"$prefix_tags"}
-        tagname=${tagname%.tmp.php}
-        create_html_page "$i" "$prefix_tags$tagname.php" yes "$global_title &mdash; $template_tag_title \"$tagname\"" "$global_author"
+        tagname=${tagname%.tmp.$file_ext}
+        create_html_page "$i" "$prefix_tags$tagname.$file_ext" yes "$global_title &mdash; $template_tag_title \"$tagname\"" "$global_author"
         rm "$i"
-    done < <(ls -t ./"$prefix_tags"*.tmp.php 2>/dev/null)
+    done < <(ls -t ./"$prefix_tags"*.tmp.$file_ext 2>/dev/null)
     echo
 }
 
@@ -721,15 +749,15 @@ get_post_author() {
 list_tags() {
     if [[ $2 == -n ]]; then do_sort=1; else do_sort=0; fi
 
-    ls ./$prefix_tags*.php &> /dev/null
+    ls ./$prefix_tags*.$file_ext &> /dev/null
     (($? != 0)) && echo "No posts yet. Use 'bb.sh post' to create one" && return
 
     lines=""
-    for i in $prefix_tags*.php; do
+    for i in $prefix_tags*.$file_ext; do
         [[ -f "$i" ]] || break
         nposts=$(grep -c "<\!-- text begin -->" "$i")
         tagname=${i#"$prefix_tags"}
-        tagname=${tagname#.php}
+        tagname=${tagname#.$file_ext}
         ((nposts > 1)) && word=$template_tags_posts || word=$template_tags_posts_singular
         line="$tagname # $nposts # $word"
         lines+=$line\\n
@@ -744,7 +772,7 @@ list_tags() {
 
 # Displays a list of the posts
 list_posts() {
-    ls ./*.php &> /dev/null
+    ls ./*.$file_ext &> /dev/null
     (($? != 0)) && echo "No posts yet. Use 'bb.sh post' to create one" && return
 
     lines=""
@@ -754,7 +782,7 @@ list_posts() {
         line="$n # $(get_post_title "$i") # $(LC_ALL=$date_locale date -r "$i" +"$date_format")"
         lines+=$line\\n
         n=$(( n + 1 ))
-    done < <(ls -t ./*.php)
+    done < <(ls -t ./*.$file_ext)
 
     echo -e "$lines" | column -t -s "#"
 }
@@ -791,7 +819,7 @@ make_rss() {
             echo "<pubDate>$(LC_ALL=C date -r "$i" +"$date_format_full")</pubDate></item>"
     
             n=$(( n + 1 ))
-        done < <(ls -t ./*.php)
+        done < <(ls -t ./*.$file_ext)
     
         echo '</channel></rss>'
     } 3>&1 >"$rssfile"
@@ -806,9 +834,9 @@ create_includes() {
     {
         echo "<h1 class=\"blog-title\"><a href=\"$global_url/$index_file\">$global_title</a></h1>" 
         echo "<p class=\"lead blog-description\">$global_description</p>"
-    } > ".title.php"
+    } > ".title.$file_ext"
 
-    if [[ -f $header_file ]]; then cp "$header_file" .header.php
+    if [[ -f $header_file ]]; then cp "$header_file" .header.$file_ext
     else {
         echo '<!DOCTYPE html>'
         echo '<html lang="en"><head>'
@@ -820,10 +848,10 @@ create_includes() {
         else 
             echo "<link rel=\"alternate\" type=\"application/rss+xml\" title=\"$template_subscribe_browser_button\" href=\"$global_feedburner\" />"
         fi
-        } > ".header.php"
+        } > ".header.$file_ext"
     fi
 
-    if [[ -f $footer_file ]]; then cp "$footer_file" .footer.php
+    if [[ -f $footer_file ]]; then cp "$footer_file" .footer.$file_ext
     else {
         protected_mail=${global_email//@/&#64;}
         protected_mail=${protected_mail//./&#46;}
@@ -837,13 +865,60 @@ create_includes() {
         fi
         echo "</div>"
         echo "</footer>"
-        } >> ".footer.php"
+        } >> ".footer.$file_ext"
     fi
 }
 
 # Delete the temporarily generated include files
 delete_includes() {
-    rm ".title.php" ".footer.php" ".header.php"
+    rm ".title.$file_ext" ".footer.$file_ext" ".header.$file_ext"
+}
+
+# Create the css file from scratch
+create_css() {
+    # To avoid overwriting manual changes. However it is recommended that
+    # this function is modified if the user changes the blog.css file
+    (( ${#css_include[@]} > 0 )) && return || css_include=('main.css' 'blog.css')
+    if [[ ! -f blog.css ]]; then 
+        # blog.css directives will be loaded after main.css and thus will prevail
+        echo '#title{font-size: x-large;}
+        a.ablack{color:black !important;}
+        li{margin-bottom:8px;}
+        ul,ol{margin-left:24px;margin-right:24px;}
+        #all_posts{margin-top:24px;text-align:center;}
+        .subtitle{font-size:small;margin:12px 0px;}
+        .content p{margin-left:24px;margin-right:24px;}
+        h1{margin-bottom:12px !important;}
+        #description{font-size:large;margin-bottom:12px;}
+        h3{margin-top:42px;margin-bottom:8px;}
+        h4{margin-left:24px;margin-right:24px;}
+        img{max-width:100%;}
+        #twitter{line-height:20px;vertical-align:top;text-align:right;font-style:italic;color:#333;margin-top:24px;font-size:14px;}' > blog.css
+    fi
+
+    # If there is a style.css from the parent page (i.e. some landing page)
+    # then use it. This directive is here for compatibility with my own
+    # home page. Feel free to edit it out, though it doesn't hurt
+    if [[ -f ../style.css ]] && [[ ! -f main.css ]]; then
+        ln -s "../style.css" "main.css" 
+    elif [[ ! -f main.css ]]; then
+        echo 'body{font-family:Georgia,"Times New Roman",Times,serif;margin:0;padding:0;background-color:#F3F3F3;}
+        #divbodyholder{padding:5px;background-color:#DDD;width:100%;max-width:874px;margin:24px auto;}
+        #divbody{border:solid 1px #ccc;background-color:#fff;padding:0px 48px 24px 48px;top:0;}
+        .headerholder{background-color:#f9f9f9;border-top:solid 1px #ccc;border-left:solid 1px #ccc;border-right:solid 1px #ccc;}
+        .header{width:100%;max-width:800px;margin:0px auto;padding-top:24px;padding-bottom:8px;}
+        .content{margin-bottom:5%;}
+        .nomargin{margin:0;}
+        .description{margin-top:10px;border-top:solid 1px #666;padding:10px 0;}
+        h3{font-size:20pt;width:100%;font-weight:bold;margin-top:32px;margin-bottom:0;}
+        .clear{clear:both;}
+        #footer{padding-top:10px;border-top:solid 1px #666;color:#333333;text-align:center;font-size:small;font-family:"Courier New","Courier",monospace;}
+        a{text-decoration:none;color:#003366 !important;}
+        a:visited{text-decoration:none;color:#336699 !important;}
+        blockquote{background-color:#f9f9f9;border-left:solid 4px #e9e9e9;margin-left:12px;padding:12px 12px 12px 24px;}
+        blockquote img{margin:12px 0px;}
+        blockquote iframe{margin:12px 0px;}' > main.css
+    fi
 }
 
 # Regenerates all the single post entries, keeping the post content but modifying
@@ -851,7 +926,7 @@ delete_includes() {
 rebuild_all_entries() {
     echo -n "Rebuilding all entries "
 
-    for i in ./*.php; do
+    for i in ./*.$file_ext; do
         is_boilerplate_file "$i" && continue;
         contentfile=.tmp.$RANDOM
         while [[ -f $contentfile ]]; do contentfile=.tmp.$RANDOM; done
@@ -888,7 +963,7 @@ usage() {
     echo "    post [-html] [filename] insert a new blog post, or the filename of a draft to continue editing it"
     echo "                            it tries to use markdown by default, and falls back to HTML if it's not available."
     echo "                            use '-html' to override it and edit the post as HTML even when markdown is available"
-    echo "    edit [-n|-f] [filename] edit an already published .php or .md file. **NEVER** edit manually a published .php file,"
+    echo "    edit [-n|-f] [filename] edit an already published .$file_ext or .md file. **NEVER** edit manually a published .$file_ext file,"
     echo "                            always use this function as it keeps internal data and rebuilds the blog"
     echo "                            use '-n' to give the file a new name, if title was changed"
     echo "                            use '-f' to edit full html file, instead of just text part (also preserves name)"
@@ -907,7 +982,7 @@ reset() {
     echo "Are you sure you want to delete all blog entries? Please write \"Yes, I am!\" "
     read -r line
     if [[ $line == "Yes, I am!" ]]; then
-        rm .*.php ./*.php ./*.css ./*.rss &> /dev/null
+        rm .*.$file_ext ./*.$file_ext ./*.css ./*.rss &> /dev/null
         echo
         echo "Deleted all posts, stylesheets and feeds."
         echo "Kept your old 'backup/.backup.tar.gz' just in case, please delete it manually if needed."
@@ -973,15 +1048,15 @@ do_main() {
 
     if [[ $1 == edit ]]; then
         if (($# < 2)) || [[ ! -f ${!#} ]]; then
-            echo "Please enter a valid .md or .php file to edit"
+            echo "Please enter a valid .md or .$file_ext file to edit"
             exit
         fi
     fi
 
     # Test for existing html files
-    if ls ./*.php &> /dev/null; then
+    if ls ./*.$file_ext &> /dev/null; then
         # We're going to back up just in case
-        tar -c -z -f "backup/.backup.tar.gz" -- *.php &&
+        tar -c -z -f "backup/.backup.tar.gz" -- *.$file_ext &&
             chmod 600 "backup/.backup.tar.gz"
     elif [[ $1 == rebuild ]]; then
         echo "Can't find any html files, nothing to rebuild"
