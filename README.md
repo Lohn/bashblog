@@ -22,16 +22,19 @@ css_style="stylename"
       hashover_comments="on"    # Turn hashover comments on/off
 ```
 
-* Changed file extension to .php
+* Added file extension support in config
 * Added support for more markdown conversion tools.
   - hsmarkdown (pandoc ext.)
-    - Supports the signature 'markdown_bin in.md > out.php'
+    - Supports the signature 'markdown_bin in.md > out.$file_ext'
   - Markdown.pl
   - markdown_py
   - md2html.awk
 
 *** If used with existing old generated files, the title will most likely disappear ***
 - This can be solved, by editing the posts with `./bb.sh edit post-title.md` and save.
+
+*** Set correct file extension in config ***
+`file_ext="html"` or `file_ext="php"`
 
 * Added Social Sharing Buttons 
   - [Super fast and easy Social Media Sharing Buttons. No JavaScript. No tracking.](https://sharingbuttons.io/)
@@ -44,8 +47,8 @@ css_style="stylename"
   - Generate one at: [termsfeed.com](https://www.termsfeed.com/blog/sample-privacy-policy-template)
 ```
 # Tip: Paste the content from the generated html to a new post (./bb.sh post) with the the title "privacy-policy"
-# This should generate a new .php file, which will be ignored from the index with html_exclude=('privacy-policy.php') down below.
-# Then add /privacy-policy.php to privacy_policy_url="" so it ends up like this: privacy_policy_url="/privacy-policy.php"
+# This should generate a new .$file_ext file, which will be ignored from the index with html_exclude=('privacy-policy.$file_ext') down below.
+# Then add /privacy-policy.$file_ext to privacy_policy_url="" so it ends up like this: privacy_policy_url="/privacy-policy.$file_ext"
 ```
   - A link will then show up in the footer.
 
